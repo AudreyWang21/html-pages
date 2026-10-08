@@ -9,7 +9,7 @@
 不用下载，在浏览器里直接打开。它们放在 `html-pages/references/`，Claude 会借用其中的交互，再换一套样式。
 
 - [模拟考试](https://audreywang21.github.io/html-pages/html-pages/references/Mock%20Exam%20Sample.html)：入门生物学选择题模拟考试，带题目导航栏、"I don't know" 选项、自动保存的答案、打乱顺序、可撤销的重置和错题导出。
-- [搭建演化树](https://audreywang21.github.io/html-pages/html-pages/references/Tree%20Building%20Sample.html)：把十二个动物类群拖到一起搭成一棵树，再给各个演化支命名。本技能说的"本身就是游戏的测验"，标杆就是它。
+- [搭建演化树](https://audreywang21.github.io/html-pages/html-pages/references/Tree%20Building%20Sample.html)：把十二个动物类群拖到一起搭成一棵树，再给各个演化支命名。
 - [拼写测试](https://audreywang21.github.io/html-pages/html-pages/references/Spelling%20Test%20Sample.html)：十个英文单词，用中文意思做提示；每一轮只重考拼错的词。
 
 `html-pages/references/image-sources/` 里还有一份免费图片网站清单，agent 可以从中找真实照片，每个网站都附有用法。

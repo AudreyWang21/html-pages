@@ -9,7 +9,7 @@ A Claude Code skill for educational and explainer HTML pages, with its author's 
 Open them in your browser, no download needed. They live in `html-pages/references/`, where Claude borrows their behaviour and gives them a new look.
 
 - [Mock exam](https://audreywang21.github.io/html-pages/html-pages/references/Mock%20Exam%20Sample.html): an intro-biology multiple-choice exam with a question rail, "I don't know" options, saved answers, shuffle, a reset with Undo, and an export of your misses.
-- [Tree building](https://audreywang21.github.io/html-pages/html-pages/references/Tree%20Building%20Sample.html): drag twelve animal groups together into a tree, then name the clades. The skill's bar for a quiz that is really a game.
+- [Tree building](https://audreywang21.github.io/html-pages/html-pages/references/Tree%20Building%20Sample.html): drag twelve animal groups together into a tree, then name the clades.
 - [Spelling test](https://audreywang21.github.io/html-pages/html-pages/references/Spelling%20Test%20Sample.html): ten English words prompted by their Chinese meanings; each round re-asks only your misses.
 
 `html-pages/references/image-sources/` also lists free image sites an agent can use for real photos, with a recipe per site.
