@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Spelling Test Sample</title>
+<!--
+  Spelling Test Sample: a reference sample for the html-pages skill. A spelling test over 10 words
+  fixed in this file; self-contained (no other file needed).
+  Reuse the behaviour; the SPELLING DRILL script block states its own contract in its header
+  comment. Redesign the look for each page that uses it rather than copying this one.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:ital,wght@0,400;0,700;1,400&family=Gentium+Book+Plus&family=Literata:opsz,wght@7..72,400..800&family=Noto+Serif+SC:wght@400;600&display=swap">
+
+<style>
+  /* Layout: one index card on the desk. The question sits above a single ruled line,
+     and the answer is typed onto that line as if on a typewriter. */
+  :root {
+    --desk: #e2e7ea;
+    --card: #fffffd;
+    --ink: #1c2637;
+    --pencil: #5d6879;
+    --rule-blue: #b6d0e6;
+    --rule-red: #cf4157;
+    --line: #cbd3d9;
+    --good: #2f7a4f;
+    --good-wash: #e3f2e8;
+    --bad-wash: #fbe5e8;
+    --font-book: "Literata", "Noto Serif SC", Georgia, serif;
+    --font-typed: "Courier Prime", "Courier New", monospace;
+    --font-zh: "Noto Serif SC", "Songti SC", "SimSun", serif;
+    --font-ipa: "Gentium Book Plus", "Charis SIL", "Segoe UI", "Lucida Sans Unicode", serif;
+    color-scheme: light;
+  }
+  *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { min-height: 100%; }
+  body { margin: 0; background: var(--desk); color: var(--ink); font: 400 1rem/1.55 var(--font-book); -webkit-font-smoothing: antialiased; }
+  button, input { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  :focus-visible { outline: 2px solid var(--rule-red); outline-offset: 2px; }
+
+  .top {
+    display: flex; align-items: center; gap: .9rem; flex-wrap: wrap;
+    padding: .65rem max(16px, 1.25rem);
+    background: var(--card); border-bottom: 1px solid var(--line);
+  }
+  .top h1 { margin: 0; font: 700 1.3rem/1.1 var(--font-book); letter-spacing: -.01em; }
+  .top nav { margin-left: auto; display: flex; gap: .25rem; }
+  .tab { font: 700 .82rem var(--font-typed); letter-spacing: .04em; text-decoration: none; color: var(--pencil); padding: .4rem .75rem; border: 1px solid transparent; border-radius: 3px; }
+  .tab[aria-current="page"] { color: var(--ink); border-color: var(--line); background: #f2f4f5; }
+  .tab:hover { color: var(--ink); }
+
+  .setup {
+    display: flex; align-items: center; gap: .5rem 1rem; flex-wrap: wrap;
+    padding: .8rem max(16px, clamp(1rem, 3vw, 2.25rem));
+    font: .82rem var(--font-typed); color: var(--pencil);
+  }
+  .sizes { display: flex; align-items: center; gap: .35rem; }
+  .sizes button { border: 1px solid var(--line); background: var(--card); border-radius: 3px; padding: .35rem .7rem; font: 700 .8rem var(--font-typed); }
+  .sizes button:hover { border-color: var(--pencil); }
+  .sizes button[aria-pressed="true"] { background: var(--ink); color: var(--card); border-color: var(--ink); }
+  .setup label { display: flex; align-items: center; gap: .4rem; cursor: pointer; }
+  .setup input[type="checkbox"] { accent-color: var(--rule-red); width: 1rem; height: 1rem; }
+
+  main { padding: 0 max(16px, clamp(1rem, 3vw, 2.25rem)) 2rem; }
+  #drill {
+    --spell-paper: var(--card);
+    --spell-ink: var(--ink);
+    --spell-muted: var(--pencil);
+    --spell-line: var(--rule-blue);
+    --spell-accent: var(--rule-red);
+    --spell-good: var(--good);
+    --spell-good-wash: var(--good-wash);
+    --spell-bad-wash: var(--bad-wash);
+    --spell-font-prompt: var(--font-zh);
+    --spell-font-answer: var(--font-typed);
+    --spell-font-ui: var(--font-typed);
+    --spell-font-note: var(--font-ipa);
+    border-radius: 3px;
+    box-shadow: 0 1px 1px rgba(28, 38, 55, .10), 0 14px 30px -18px rgba(28, 38, 55, .45);
+  }
+  .problem { margin: 0; padding: 1rem 1.2rem; background: var(--card); border-left: 3px solid var(--rule-red); }
+</style>
+
+<!-- ═══ SPELLING DRILL: styles (copy with the script block below) ═══ -->
+<style>
+  /* The drill's layout follows 不背单词's spelling screen: the typed word is the centrepiece on one
+     ruled line, the meaning sits under it, and two round buttons (hear it; check, then next) below.
+     Everything above the buttons has a fixed height, so they never move while a word is answered;
+     feedback grows below them. */
+  .spell {
+    --spell-speaker: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M3 7.5h3l4-3.5v12l-4-3.5H3z' fill='black'/%3E%3Cpath d='M13 7.2a4 4 0 0 1 0 5.6M15.3 5a7 7 0 0 1 0 10' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E");
+    --spell-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 10.5l4 4 8-9' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    --spell-next: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M4 10h12M11 5l5 5-5 5' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background: var(--spell-paper, #fff); color: var(--spell-ink, #1c2637);
+    font-family: var(--spell-font-ui, ui-monospace, monospace);
+    padding: clamp(1rem, 3vw, 2rem) clamp(1rem, 4vw, 2.5rem) clamp(1.5rem, 4vw, 2.5rem);
+  }
+  .spell, .spell *, .spell *::before, .spell *::after { box-sizing: border-box; }
+  .spell [hidden] { display: none !important; }
+  .spell button { font: 700 .8rem var(--spell-font-ui, monospace); letter-spacing: .03em; cursor: pointer; }
+  .spell kbd { font: 600 .9em system-ui, "Segoe UI", sans-serif; padding: .02em .35em; border: 1px solid var(--spell-line, #bcd); border-radius: 3px; margin-right: .35em; }
+
+  .spell > div {
+    display: grid; grid-template-columns: 1fr auto auto 1fr; column-gap: 1.75rem;
+    grid-template-areas:
+      "progress progress progress progress"
+      "input    input    input    input"
+      "prompt   prompt   prompt   prompt"
+      ".        say      go       ."
+      "feedback feedback feedback feedback"
+      "after    after    after    after"
+      "keys     keys     keys     keys";
+  }
+  .spell-answer { display: contents; }
+  .spell-done, .spell > div > .spell-instr { grid-column: 1 / -1; }
+
+  .spell-progress { grid-area: progress; display: flex; align-items: center; gap: .5rem 1rem; flex-wrap: wrap; margin: 0; }
+  .spell-where { font: 700 1rem var(--spell-font-ui, monospace); color: var(--spell-muted, #667); font-variant-numeric: tabular-nums; }
+  .spell-dots { display: flex; flex-wrap: wrap; gap: .3rem; }
+  .spell-dots span { font-size: 0; width: .6rem; height: .6rem; border-radius: 50%; border: 1.5px solid var(--spell-muted, #667); }
+  .spell-dots .is-current { border-color: var(--spell-ink, #123); box-shadow: 0 0 0 2px var(--spell-paper, #fff), 0 0 0 3.5px var(--spell-ink, #123); }
+  .spell-dots .is-right { background: var(--spell-good, #2a7); border-color: var(--spell-good, #2a7); }
+  .spell-dots .is-missed { background: var(--spell-accent, #c34); border-color: var(--spell-accent, #c34); }
+
+  .spell-input {
+    grid-area: input; justify-self: center; width: min(100%, 36rem); min-width: 0;
+    margin-top: clamp(1.75rem, 6vw, 3.25rem);
+    color: inherit; caret-color: var(--spell-accent, #c34);
+    border: 0; border-bottom: 2px solid var(--spell-line, #bcd); border-radius: 0; background: transparent;
+    height: clamp(3.3rem, 11vw, 4.6rem);   /* fixed, so a long word's smaller type doesn't move what's below */
+    padding: .1rem .1rem .3rem; text-align: center;
+    font: 600 clamp(2.1rem, 7.5vw, 3.4rem) var(--spell-font-answer, monospace); letter-spacing: .05em;
+  }
+  .spell-input:focus { outline: none; }
+  .spell-input.is-right { color: var(--spell-good, #2a7); border-bottom-color: var(--spell-good, #2a7); }
+  .spell-input.is-shaking { animation: spell-shake .28s; }
+  @keyframes spell-shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  @media (prefers-reduced-motion: reduce) { .spell-input.is-shaking { animation: none; } }
+
+  .spell-question { grid-area: prompt; margin: 1rem 0 0; text-align: center; }
+  .spell-prompt { margin: 0; min-height: 3em; font: 600 clamp(1.1rem, 3vw, 1.45rem)/1.5 var(--spell-font-prompt, serif); text-wrap: balance; white-space: pre-line; }   /* room for two lines */
+
+  .spell-feedback { grid-area: feedback; min-height: 4.5rem; margin: 1.1rem auto 0; width: min(100%, 34rem); text-align: center; }
+  .spell-feedback p { margin: .3rem 0; }
+  .spell-tick { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }   /* the green word above says it; kept for screen readers */
+  .spell-note { display: inline-block; padding: .3rem .95rem; border-radius: 999px; background: color-mix(in srgb, var(--spell-line, #bcd) 40%, transparent); color: var(--spell-muted, #667); font: 1.05rem var(--spell-font-note, serif); }
+  .spell-reveal { margin: .3rem 0; }
+  .spell-feedback > .spell-note { display: table; margin: .6rem auto 0; }   /* under the miss, on its own line */
+  .spell-miss { display: inline-table; border-collapse: collapse; max-width: 100%; text-align: left; }
+  .spell-miss th { padding: .1rem .9rem .1rem 0; text-align: right; font-weight: 400; font-size: .74rem; letter-spacing: .1em; text-transform: uppercase; color: var(--spell-muted, #667); white-space: nowrap; vertical-align: baseline; }
+  .spell-miss td { padding: .1rem 0; vertical-align: baseline; }
+  .spell-letters { font: 400 1.35rem var(--spell-font-answer, monospace); letter-spacing: .08em; overflow-wrap: anywhere; }
+  .spell-letters del { text-decoration: line-through 2px; text-decoration-color: var(--spell-accent, #c34); background: var(--spell-bad-wash, #fde); }
+  .spell-letters ins { text-decoration: none; color: var(--spell-accent, #c34); font-weight: 700; border-bottom: 2px solid var(--spell-accent, #c34); }
+  .spell-instr { font-size: .85rem; color: var(--spell-muted, #667); }
+  .spell-retry { font-size: .85rem; color: var(--spell-accent, #c34); }
+
+  /* round buttons: the speaker, and check (✓) that turns into next (→) once the word is answered */
+  .spell .spell-go, .spell [data-act="say"] {
+    width: 3.4rem; height: 3.4rem; margin-top: .6rem; padding: 0; border-radius: 50%;
+    position: relative; font-size: 0;
+  }
+  /* the icon sits dead centre; the hidden label text can't push it */
+  .spell .spell-go::before, .spell [data-act="say"]::before { position: absolute; inset: 0; margin: auto; }
+  .spell-go { grid-area: go; border: 0; background: var(--spell-ink, #123); color: var(--spell-paper, #fff); }
+  .spell-go::before { content: ""; width: 1.45rem; height: 1.45rem; background: currentColor; -webkit-mask: var(--spell-check) center / contain no-repeat; mask: var(--spell-check) center / contain no-repeat; }
+  .spell [data-stage="answered"] .spell-go { background: var(--spell-good, #2a7); }
+  .spell [data-stage="answered"] .spell-go::before { -webkit-mask-image: var(--spell-next); mask-image: var(--spell-next); }
+  .spell [data-act="say"] { grid-area: say; border: 1px solid var(--spell-line, #bcd); background: transparent; color: var(--spell-muted, #667); }
+  .spell [data-act="say"]:hover { color: var(--spell-ink, #123); border-color: var(--spell-muted, #667); }
+  .spell [data-act="say"]::before { content: ""; width: 1.35rem; height: 1.35rem; background: currentColor; -webkit-mask: var(--spell-speaker) center / contain no-repeat; mask: var(--spell-speaker) center / contain no-repeat; }
+
+  .spell-after { grid-area: after; display: flex; justify-content: center; gap: .4rem; min-height: 2rem; margin-top: .8rem; }
+  .spell-tool { border: 1px solid var(--spell-line, #bcd); background: transparent; color: var(--spell-muted, #667); border-radius: 3px; padding: .35rem .7rem; }
+  .spell-tool:hover { color: var(--spell-ink, #123); border-color: var(--spell-muted, #667); }
+  .spell-keys { grid-area: keys; list-style: none; display: flex; flex-wrap: wrap; justify-content: center; gap: .35rem 1.4rem; margin: 1.5rem 0 0; padding: 1rem 0 0; border-top: 1px dashed var(--spell-line, #bcd); font-size: .74rem; color: var(--spell-muted, #667); }
+  @media (hover: none) and (pointer: coarse) { .spell-keys { display: none; } }
+
+  .spell-done { text-align: center; padding: 1rem 0 .5rem; }
+  .spell-done h2 { margin: 0; font: 700 1.6rem var(--spell-font-answer, monospace); }
+  .spell-results { margin: 1.2rem auto 0; border-collapse: collapse; width: min(100%, 24rem); text-align: left; font-variant-numeric: tabular-nums; }
+  .spell-results th { padding: .3rem .8rem; font-weight: 400; font-size: .74rem; letter-spacing: .12em; text-transform: uppercase; color: var(--spell-muted, #667); border-bottom: 1px solid var(--spell-line, #bcd); }
+  .spell-results td { padding: .32rem .8rem; border-bottom: 1px dashed var(--spell-line, #bcd); }
+  .spell-results td:first-child { font: 700 1.05rem var(--spell-font-answer, monospace); overflow-wrap: anywhere; }
+  .spell-results th:last-child, .spell-results td:last-child { text-align: right; }
+  .spell-results .is-wrong td:last-child { color: var(--spell-accent, #c34); font-weight: 700; }
+  .spell-results .is-clean td { color: var(--spell-muted, #667); font-weight: 400; }
+  .spell-done .spell-tools { display: flex; justify-content: center; flex-wrap: wrap; gap: .4rem; margin-top: 1.6rem; }
+  .spell .spell-done .spell-tools > button { margin: 0; padding: .55rem .9rem; }   /* the two result buttons match in height */
+  .spell .spell-done .spell-go { width: auto; height: auto; border-radius: 3px; font-size: .8rem; display: inline-block; background: var(--spell-ink, #123); }
+  .spell-done .spell-go::before { content: none; }
+  .spell-copybox { display: block; width: min(100%, 34rem); height: 7rem; margin: 1rem auto 0; font: .8rem var(--spell-font-ui, monospace); color: inherit; background: transparent; border: 1px solid var(--spell-line, #bcd); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1>Spelling test sample</h1>
+</header>
+
+<div class="setup">
+  <span class="sizes"><button type="button" id="new-test">New test</button></span>
+</div>
+
+<main>
+  <div id="drill"></div>
+</main>
+
+<!-- ═══ SPELLING DRILL: script (copy with the style block above) ═══ -->
+<script>
+/*
+  SpellingDrill.start(container, items, options) runs a spelling round inside `container`
+  (any element; its children are replaced).
+
+  items: [{ answer, prompt, speak, note }]
+    answer  what must be typed. Checked ignoring case, extra or doubled spaces, fullwidth
+            letters, curly vs straight apostrophes, dash style and a final full stop.
+    prompt  the question, plain text (here: the Chinese gloss)
+    speak   optional text read aloud by "Hear it"; defaults to answer; false = no audio for this item
+    note    optional plain text shown once the word is answered (here: the IPA)
+  options:
+    voice             false = no speech at all: no "Hear it" button, no ↑ key (default true)
+    autofocus         put the cursor in the answer box at the start (default true)
+    source            first line of the copied results (default: this page's path or address)
+    onFinish(result)  called when the results table appears ("Practise these again" runs included)
+  returns: { options }
+  result:  { words: [{ answer, timesWrong, typed: [what was typed each time it was wrong; "" = blank] }] }
+
+  How a test runs: round 1 asks every item in the order given. Each later round asks, shuffled,
+  only the words missed in the round before; a word spelled right is never asked again. When a
+  round has no misses, a table shows every word and how many times it was spelled wrong.
+  A miss shows the word, which must be retyped (the retype doesn't count); Enter on an empty
+  answer counts as wrong. Each answered word waits for Enter before the next one. Enter works
+  anywhere on the page, not only in the answer box (other buttons and fields keep their own Enter). Nothing is
+  spoken unless the viewer asks. "Count mine as correct" accepts a typed answer the checker
+  rejected (a variant spelling) and takes back that miss.
+
+  Look: everything readable is in the markup, so the drill works with no CSS at all. A style
+  block can read --spell-* custom properties (paper, ink, muted, line, accent, good, good-wash,
+  bad-wash, font-prompt, font-answer, font-ui, font-note) set on the container, and the round's
+  wrapper carries data-stage (asking / answered / retype / done). Several drills can share a
+  page; they share one speaking voice.
+*/
+var SpellingDrill = window.SpellingDrill || (() => {
+  "use strict";
+  const escapeHtml = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  // Text tidied the way the checker reads it: fullwidth letters and the ideographic full stop from
+  // a Chinese keyboard folded, curly apostrophes and dash variants straightened, spaces collapsed.
+  const tidy = (s) => String(s ?? "").normalize("NFKC")
+    .replace(/[‘’ʼ]/g, "'").replace(/[‐-―]/g, "-").replace(/。/g, ".")
+    .replace(/\s+/g, " ").trim();
+  const normalize = (s) => tidy(s).toLowerCase().replace(/\s*\.$/, "");
+  const shuffle = (arr) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+  // ── speech ──
+  const canSpeak = "speechSynthesis" in window;
+  let pendingSpeech = null;
+  function pickVoice() {
+    const voices = canSpeak ? speechSynthesis.getVoices() : [];
+    return voices.find((v) => /^en[-_]CA/i.test(v.lang)) || voices.find((v) => /^en[-_]US/i.test(v.lang)) ||
+           voices.find((v) => /^en[-_]GB/i.test(v.lang)) || voices.find((v) => /^en/i.test(v.lang)) || null;
+  }
+  // Browsers refuse speech before the viewer's first click or key press; the refused word is said then.
+  function clearPending() {
+    pendingSpeech = null;
+    window.removeEventListener("pointerdown", sayPending, true);
+    window.removeEventListener("keydown", sayPending, true);
+  }
+  function sayPending() { const text = pendingSpeech; clearPending(); if (text) say(text); }
+  function say(text) {
+    if (!canSpeak || !text) return;
+    clearPending();
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    const v = pickVoice();
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = "en-CA"; }
+    u.rate = 0.85;
+    u.onerror = (ev) => {
+      if (ev.error !== "not-allowed") return;
+      pendingSpeech = text;
+      window.addEventListener("pointerdown", sayPending, true);
+      window.addEventListener("keydown", sayPending, true);
+    };
+    speechSynthesis.speak(u);
+  }
+  if (canSpeak) speechSynthesis.getVoices();
+
+  // Enter anywhere on the page acts like Enter in the answer box of the drill used last,
+  // unless the key is meant for another control.
+  let activeRound = null;
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Enter" || ev.repeat || ev.isComposing || ev.keyCode === 229 || ev.defaultPrevented) return;
+    if (!activeRound || !activeRound.isLive()) return;
+    const target = ev.target instanceof Element ? ev.target : null;
+    if (target && target.closest("input, textarea, select, button, a[href], [contenteditable]")) return;
+    ev.preventDefault();
+    activeRound.enter();
+  });
+
+  // ── showing a miss letter by letter ──
+  // Edit-distance alignment, run over the reversed strings so that ties fall toward the start of
+  // the word: "int" against "interlocutor" reads as int, then erlocutor missing.
+  function align(typed, answer) {
+    const a = [...typed].reverse(), b = [...answer].reverse();
+    const same = (x, y) => x.toLowerCase() === y.toLowerCase();
+    const d = Array.from({ length: a.length + 1 }, (_, i) => { const row = new Array(b.length + 1).fill(0); row[0] = i; return row; });
+    for (let j = 0; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++)
+      for (let j = 1; j <= b.length; j++)
+        d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (same(a[i - 1], b[j - 1]) ? 0 : 1));
+    const ops = [];   // the walk back over the reversed strings yields the original reading order
+    let i = a.length, j = b.length;
+    while (i > 0 || j > 0) {
+      if (i > 0 && j > 0 && d[i][j] === d[i - 1][j - 1] + (same(a[i - 1], b[j - 1]) ? 0 : 1)) {
+        ops.push({ kind: same(a[i - 1], b[j - 1]) ? "same" : "wrong", typed: a[i - 1], answer: b[j - 1] }); i--; j--;
+      } else if (i > 0 && d[i][j] === d[i - 1][j] + 1) { ops.push({ kind: "extra", typed: a[i - 1] }); i--; }
+      else { ops.push({ kind: "missing", answer: b[j - 1] }); j--; }
+    }
+    return ops;
+  }
+  const GAP = '<span class="spell-gap"> </span>';   // keeps the two lines in step, letter under letter
+  const shown = (ch) => (ch === " " ? "␣" : escapeHtml(ch));
+  const row = (label, letters) => `<tr><th scope="row">${label}</th><td><samp class="spell-letters">${letters}</samp></td></tr>`;
+  function missTable(typed, answer) {
+    let word = String(answer), stop = "";
+    if (word.endsWith(".")) { word = word.slice(0, -1); stop = "."; }   // the final stop is optional to the checker
+    const ops = align(tidy(typed).replace(/\s*\.$/, ""), word);
+    const typedLine = ops.map((o) => o.kind === "same" ? escapeHtml(o.typed) : o.kind === "missing" ? GAP : `<del>${shown(o.typed)}</del>`).join("");
+    const wordLine = ops.map((o) => o.kind === "same" ? escapeHtml(o.answer) : o.kind === "extra" ? GAP : `<ins>${shown(o.answer)}</ins>`).join("") + stop;
+    return `<table class="spell-miss">${row("You typed", typedLine)}${row("The word", wordLine)}</table>`;
+  }
+
+  function pagePath() {
+    if (location.protocol === "file:") return decodeURIComponent(location.pathname).replace(/^\/([A-Za-z]:)/, "$1").replace(/\//g, "\\");
+    return location.origin + location.pathname;
+  }
+
+  function start(container, items, options) {
+    const opts = options || {};
+    const voice = canSpeak && opts.voice !== false;
+    const pool = (items || []).filter((it) => it && normalize(it.answer));
+    const typedWrong = new Map(pool.map((it) => [it, []]));   // item → what was typed each time it was wrong
+    let pass = 1, queue = [...pool], index = 0, misses = [];
+    const solved = new Set();         // words spelled right; their dots stay green from round to round
+    let stage = "asking";             // asking → answered, or asking → retype → answered; Enter then moves on
+    let firstTyped = "", askedAt = 0, firstAsk = true;
+
+    container.classList.add("spell");
+    const root = document.createElement("div");
+    container.replaceChildren(root);
+    if (!pool.length) {
+      root.innerHTML = '<p class="spell-instr">No words to spell.</p>';
+      if (typeof opts.onFinish === "function") opts.onFinish({ words: [] });
+      return { options: opts };
+    }
+
+    root.innerHTML = `
+      <p class="spell-progress"><span class="spell-where"></span> <span class="spell-dots" aria-hidden="true"></span></p>
+      <div class="spell-question"><p class="spell-prompt"></p></div>
+      <div class="spell-answer">
+        <input class="spell-input" type="text" aria-label="Type the word"
+               autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go">
+        <button class="spell-go" type="button">Check</button>
+        ${voice ? '<button type="button" class="spell-tool" data-act="say">Hear it</button>' : ""}
+      </div>
+      <div class="spell-feedback" aria-live="polite"></div>
+      <div class="spell-after"><button type="button" class="spell-tool" data-act="accept" hidden>Count mine as correct</button></div>
+      ${voice ? '<ul class="spell-keys" aria-label="Keyboard shortcuts"><li><kbd>↑</kbd> hear the word</li></ul>' : ""}`;
+    const q = (sel) => root.querySelector(sel);
+    const input = q(".spell-input"), go = q(".spell-go"), feedback = q(".spell-feedback");
+    const btn = (act) => q(`[data-act="${act}"]`);
+    const setStage = (s) => { stage = s; root.dataset.stage = s; };   // data-stage is a styling hook
+
+    const item = () => queue[index];
+    const speakText = (it) => (it.speak === false ? "" : it.speak || String(it.answer));
+    const isRight = (typed) => normalize(typed) === normalize(item().answer);
+    const focusInput = () => input.focus({ preventScroll: true });
+
+    // A long answer ("reductio ad absurdum") shrinks to fit the box instead of running out of sight.
+    const measure = document.createElement("canvas").getContext("2d");
+    function fitInput() {
+      input.style.fontSize = "";
+      const cs = getComputedStyle(input);
+      const full = parseFloat(cs.fontSize);
+      const room = input.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 4;
+      if (!input.value || !full || room <= 0) return;
+      measure.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      const width = measure.measureText(input.value).width + (parseFloat(cs.letterSpacing) || 0) * input.value.length;
+      if (width > room) input.style.fontSize = Math.max(full * 0.45, full * room / width) + "px";
+    }
+
+    function renderProgress() {
+      q(".spell-where").textContent = `${solved.size}/${pool.length}`;
+      const marks = { right: "✓", missed: "✗", current: "▸", pending: "·" };
+      // one dot per word in the test: right stays right; a miss shows until the next round, then waits again
+      q(".spell-dots").innerHTML = pool.map((it) => {
+        const state = solved.has(it) ? "right" : misses.includes(it) ? "missed" : it === item() ? "current" : "pending";
+        return `<span class="is-${state}">${marks[state]}</span>`;
+      }).join(" ");
+    }
+    function ask() {
+      const it = item();
+      setStage("asking"); firstTyped = ""; askedAt = Date.now();
+      q(".spell-prompt").textContent = it.prompt || "(no prompt)";
+      if (voice) btn("say").hidden = !speakText(it);
+      btn("accept").hidden = true;
+      input.value = ""; input.readOnly = false; input.classList.remove("is-right");
+      fitInput();
+      go.textContent = "Check";
+      feedback.innerHTML = "";
+      renderProgress();
+      if (opts.autofocus !== false || !firstAsk) focusInput();
+      firstAsk = false;
+    }
+    function showAnswered() {
+      setStage("answered");
+      const it = item();
+      input.readOnly = true; input.classList.add("is-right");
+      go.textContent = "Next";
+      btn("accept").hidden = true;
+      feedback.innerHTML = `<p class="spell-right"><span class="spell-tick">✓ <b>${escapeHtml(it.answer)}</b></span>${it.note ? ` <span class="spell-note">${escapeHtml(it.note)}</span>` : ""}</p>`;
+      renderProgress();
+    }
+    function markRight() { solved.add(item()); showAnswered(); }
+    function markMissed(typed) {
+      setStage("retype");
+      firstTyped = typed;
+      typedWrong.get(item()).push(typed);
+      misses.push(item());
+      const it = item();
+      btn("accept").hidden = !typed;
+      feedback.innerHTML = (typed ? missTable(typed, it.answer) : `<p class="spell-reveal"><samp class="spell-letters">${escapeHtml(it.answer)}</samp></p>`)
+        + (it.note ? `<p class="spell-note">${escapeHtml(it.note)}</p>` : "");
+      input.value = "";
+      fitInput();
+      focusInput();
+      renderProgress();
+    }
+    function acceptTyped() {
+      if (stage !== "retype" || !firstTyped) return;
+      misses = misses.filter((m) => m !== item());
+      typedWrong.get(item()).pop();   // this round's miss is taken back
+      solved.add(item());
+      advance();
+    }
+    function advance() {
+      index++;
+      if (index < queue.length) { ask(); return; }
+      if (misses.length) { pass++; queue = shuffle(misses); misses = []; index = 0; ask(); return; }
+      finish();
+    }
+    function notQuite() {
+      if (!feedback.querySelector(".spell-retry")) feedback.insertAdjacentHTML("beforeend", '<p class="spell-retry">Not quite.</p>');
+      input.classList.remove("is-shaking"); void input.offsetWidth; input.classList.add("is-shaking");
+    }
+
+    function onEnter() {
+      const typed = input.value;
+      if (stage === "asking") {
+        if (!normalize(typed)) {
+          if (Date.now() - askedAt < 400) return;   // a stray extra Enter just as the word came up
+          markMissed(""); return;                    // Enter on an empty answer counts as wrong
+        }
+        isRight(typed) ? markRight() : markMissed(typed.trim());
+      } else if (stage === "answered") {
+        advance();
+      } else if (stage === "retype") {
+        isRight(typed) ? showAnswered() : notQuite();
+      }
+    }
+
+    function finish() {
+      setStage("done");
+      // most-wrong first; words with the same count keep round 1's order
+      const rows = pool.map((it) => ({ item: it, answer: it.answer, timesWrong: typedWrong.get(it).length, typed: [...typedWrong.get(it)] }))
+        .sort((a, b) => b.timesWrong - a.timesWrong);
+      const r = { words: rows.map(({ answer, timesWrong, typed }) => ({ answer, timesWrong, typed })) };
+      const missedItems = rows.filter((w) => w.timesWrong > 0).map((w) => w.item);
+      root.innerHTML = `
+        <div class="spell-done">
+          <h2>Results</h2>
+          <table class="spell-results">
+            <thead><tr><th scope="col">Word</th><th scope="col">Times wrong</th></tr></thead>
+            <tbody>${rows.map((w) => `<tr class="${w.timesWrong ? "is-wrong" : "is-clean"}"><td>${escapeHtml(w.answer)}</td><td>${w.timesWrong}</td></tr>`).join("")}</tbody>
+          </table>
+          <div class="spell-tools">
+            <button type="button" class="spell-tool" data-act="copy">Copy results</button>
+            ${missedItems.length ? `<button type="button" class="spell-go" data-act="again">Practise ${missedItems.length === 1 ? "this word" : `these ${missedItems.length}`} again</button>` : ""}
+          </div>
+          <textarea class="spell-copybox" readonly hidden aria-label="Results to copy"></textarea>
+        </div>`;
+      const text = resultText(r);
+      root.querySelector('[data-act="copy"]').addEventListener("click", (ev) => {
+        const box = root.querySelector(".spell-copybox");
+        const fallback = () => { box.hidden = false; box.value = text; box.focus(); box.select(); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(() => { ev.target.textContent = "Copied"; }, fallback);
+        } else fallback();
+      });
+      const again = root.querySelector('[data-act="again"]');
+      if (again) again.addEventListener("click", () => start(container, shuffle(missedItems), opts));
+      if (typeof opts.onFinish === "function") opts.onFinish(r);
+    }
+    function resultText(r) {
+      const now = new Date();
+      const stamp = now.toLocaleDateString("en-CA") + " " + now.toTimeString().slice(0, 5);
+      const wrong = r.words.filter((w) => w.timesWrong > 0);
+      const lines = [`Spelling results · ${opts.source || pagePath()}`, `${stamp} · ${r.words.length} words · ${wrong.length} spelled wrong at least once`];
+      for (const w of wrong) lines.push(`${w.answer}: wrong ${w.timesWrong}× (typed ${w.typed.map((t) => (t ? `“${t}”` : "nothing")).join(", ")})`);
+      const clean = r.words.filter((w) => w.timesWrong === 0).map((w) => w.answer);
+      if (clean.length) lines.push("Right every time: " + clean.join(", "));
+      return lines.join("\n");
+    }
+
+    // ── events (bound to this round's own elements) ──
+    input.addEventListener("input", fitInput);
+    if ("ResizeObserver" in window) new ResizeObserver(fitInput).observe(input);
+    input.addEventListener("keydown", (ev) => {
+      if (ev.isComposing || ev.keyCode === 229) return;   // an input method is still composing
+      if (ev.key === "Enter") { ev.preventDefault(); if (!ev.repeat) onEnter(); }
+      else if (ev.key === "ArrowUp" && voice) { ev.preventDefault(); say(speakText(item())); }
+    });
+    go.addEventListener("click", () => { onEnter(); if (stage !== "done") focusInput(); });
+    root.addEventListener("click", (ev) => {
+      const b = ev.target.closest("[data-act]");
+      if (!b || stage === "done") return;
+      const act = b.dataset.act;
+      if (act === "say") say(speakText(item()));
+      if (act === "accept") acceptTyped();
+      if (act !== "accept") focusInput();
+    });
+
+    const round = {
+      enter() { if (stage === "done") return; onEnter(); if (stage !== "done") focusInput(); },
+      isLive: () => root.isConnected,
+    };
+    activeRound = round;
+    root.addEventListener("focusin", () => { activeRound = round; });
+    root.addEventListener("pointerdown", () => { activeRound = round; });
+
+    ask();
+    return { options: opts };
+  }
+
+  return { start, say, normalize };
+})();
+</script>
+<!-- ═══ end SPELLING DRILL ═══ -->
+
+<script>
+// ── 10 sample words, fixed here so the sample stands alone ──
+const SAMPLE_ITEMS = [
+  {"answer": "abstention", "prompt": "弃权；戒除，节制", "note": "[əbˈstɛnʃən]"},
+  {"answer": "bifurcate", "prompt": "分叉，一分为二；（法律）分案审理", "note": "[ˈbaɪfəɹkeɪt] (v.) / [baɪˈfɜːɹkət] (adj.)"},
+  {"answer": "commensurable", "prompt": "可通约的，可比的", "note": "[kəˈmɛnʃəɹəbəl]"},
+  {"answer": "counterfactual", "prompt": "反事实的；反事实条件句", "note": "[ˌkaʊntərˈfæktʃuəl]"},
+  {"answer": "hieroglyphic", "prompt": "象形文字；（喻）难解符号", "note": "[ˌhaɪəɹəˈɡlɪfɪk]"},
+  {"answer": "interlocutor", "prompt": "对话者；会谈代表", "note": "[ˌɪntərˈlɒkjətər]"},
+  {"answer": "recalcitrant", "prompt": "桀骜不驯的；难处理的", "note": "[rɪˈkælsɪtrənt]"},
+  {"answer": "shibboleth", "prompt": "甄别内外的口令；陈旧教条", "note": "[ˈʃɪbəlɛθ]"},
+  {"answer": "vertiginous", "prompt": "令人眩晕的；（喻）急剧攀升的", "note": "[vɜrˈtɪdʒɪnəs]"},
+  {"answer": "reductio ad absurdum", "prompt": "归谬法", "note": "[rɪˌdʌktioʊ æd əbˈsɜːɹdəm]"}
+];
+
+(() => {
+  "use strict";
+  const shuffle = (arr) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+  const newTest = () => SpellingDrill.start(document.getElementById("drill"), shuffle(SAMPLE_ITEMS));
+  document.getElementById("new-test").addEventListener("click", newTest);
+  newTest();
+})();
+</script>
+</body>
+</html>

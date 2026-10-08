@@ -1,0 +1,853 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Build the Animal Tree</title>
+<!--
+  Tree Building Sample: a reference sample for the html-pages skill. A recall game for a
+  lecture's animal tree: twelve loose groups are joined into the tree by drag and drop, then its
+  clades are named. Self-contained (only Google Fonts loads from outside).
+  Reuse the game wherever building a tree helps, with a new design each time;
+  beyond that, it is the bar for creative interactions: a test that is a real game.
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=Atkinson+Hyperlegible:wght@400;700&family=Kalam:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one sheet of graph paper is the workbench. Header and tools on top; below, the whole sheet is where loose pieces of tree are dragged together.
+   Ink = the tree. Red pen = cuts and wrong marks. Green pen = right marks. Blue pencil = where a drop will land. One deliberate light look. */
+:root{
+  --paper:#FAFBF8;      /* sheet */
+  --grid:#E3E8EB;       /* minor graph lines */
+  --grid-major:#D2DAE0; /* every fifth line */
+  --ink:#1B1F24;        /* the tree */
+  --ink-soft:#5E6872;   /* common names, captions */
+  --rule:#CBD3DA;
+  --red:#C2292E;        /* red pen */
+  --green:#23784A;      /* green pen */
+  --blue:#2361B0;       /* blue pencil: drop targets */
+  --blue-wash:#E2ECF8;
+  --card:#FFFFFF;
+  --display:"Source Serif 4", Georgia, "Noto Serif SC", "SimSun", serif;
+  --body:"Atkinson Hyperlegible", "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+  --hand:"Kalam", "Segoe Print", "Comic Sans MS", cursive;
+  --mono:"JetBrains Mono", Consolas, monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:120px 120px,120px 120px,24px 24px,24px 24px;
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:16px;
+  line-height:1.5;
+  padding-inline:20px;
+  padding-block:16px 40px;
+}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+/* ---------- header ---------- */
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 28px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+h1{font-family:var(--display);font-weight:700;font-size:38px;line-height:1.05;margin:2px 0 4px;text-wrap:balance;letter-spacing:-.01em}
+.lede{margin:0;color:var(--ink-soft)}
+ol.steps{list-style:none;margin:0;padding:0;display:flex;gap:6px;font-family:var(--mono);font-size:12.5px}
+ol.steps li{padding:5px 12px;border:1.5px solid var(--rule);border-radius:999px;color:var(--ink-soft);background:var(--paper)}
+ol.steps li.now{border-color:var(--ink);color:var(--ink);background:var(--card);font-weight:500}
+ol.steps li.done{border-color:var(--green);color:var(--green)}
+
+/* ---------- tools ---------- */
+.tools{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin:14px 0 8px}
+.btn{border:1.5px solid var(--ink);background:var(--card);border-radius:6px;padding:5px 13px;cursor:pointer;font-family:var(--mono);font-size:13px;line-height:1.4}
+.btn:hover:not(:disabled){background:var(--ink);color:var(--card)}
+.btn.main{background:var(--ink);color:var(--card)}
+.btn.main:hover:not(:disabled){background:var(--blue);border-color:var(--blue)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn.arm{background:var(--red);border-color:var(--red);color:var(--card)}
+.sep{width:1px;height:24px;background:var(--rule)}
+.seg{display:inline-flex;border:1.5px solid var(--ink);border-radius:6px;overflow:hidden;background:var(--card)}
+.seg span{font-family:var(--mono);font-size:12px;color:var(--ink-soft);padding:5px 8px 5px 10px;border-right:1.5px solid var(--ink)}
+.seg button{border:0;background:transparent;padding:5px 10px;cursor:pointer;font-family:var(--mono);font-size:12.5px}
+.seg button+button{border-left:1px solid var(--rule)}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--card)}
+
+/* ---------- the note: written on the sheet in pen ---------- */
+.note{font-family:var(--hand);font-size:20px;line-height:1.35;min-height:30px;margin:2px 0 6px;color:var(--ink);display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px}
+.note .msg{min-width:0}
+.note.ok .msg{color:var(--green)}
+.note.no .msg{color:var(--red)}
+.note .btn{font-size:12.5px}
+.note textarea{flex-basis:100%;min-height:150px;font-family:var(--mono);font-size:12.5px;padding:8px;border:1.5px solid var(--ink);border-radius:6px}
+.summary{flex-basis:100%;font-family:var(--body);font-size:15px;color:var(--ink);margin:0;padding-left:1.1em}
+
+/* ---------- how-to strip, redrawn from the sketch ---------- */
+details.how{margin:4px 0 10px}
+details.how summary{cursor:pointer;font-family:var(--mono);font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft);width:max-content}
+.howgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(230px,100%),1fr));gap:10px;margin-top:8px}
+.howgrid figure{margin:0;padding:8px 10px 10px;background:var(--card);border:1px solid var(--rule);border-radius:6px;min-width:0}
+.howgrid svg{display:block;width:100%;max-width:220px;height:auto}
+.howgrid figcaption{font-size:14px;line-height:1.35;margin-top:4px}
+.howgrid figcaption b{font-weight:700}
+.mini .l{fill:none;stroke:var(--ink);stroke-width:1.8;stroke-linecap:square}
+.mini text{font-family:var(--hand);font-size:15px;fill:var(--ink)}
+.mini .op{font-family:var(--body);font-size:15px;fill:var(--ink-soft)}
+.mini .r{fill:var(--red);font-weight:700;font-size:18px}
+.mini .bl{fill:none;stroke:var(--blue);stroke-width:2}
+.mini .ring{fill:var(--paper);stroke:var(--blue);stroke-width:2}
+.mini .dot{fill:var(--card);stroke:var(--ink);stroke-width:1.5}
+
+/* ---------- label tray ---------- */
+.tray{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 8px;min-height:38px;touch-action:none}
+.tray .lab{font-family:var(--mono);font-size:12px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft);margin-right:4px}
+.chip{border:1.5px solid var(--ink);background:var(--card);border-radius:5px;padding:4px 11px;cursor:grab;font-family:var(--display);font-weight:600;font-size:16px;user-select:none;touch-action:none;box-shadow:2px 2px 0 var(--rule)}
+.chip .zh{font-family:var(--body);font-weight:400;font-size:13px;color:var(--ink-soft);margin-left:6px}
+.chip:hover{border-color:var(--blue)}
+.chip.lifted{opacity:.3}
+.ghost{position:fixed;z-index:30;pointer-events:none;transform:translate(-50%,-120%);box-shadow:3px 3px 0 var(--rule)}
+
+/* ---------- bench ---------- */
+.bench{position:relative;overflow-x:auto;overflow-y:hidden;border-top:1.5px solid var(--ink);padding-top:6px}
+svg.board{display:block;user-select:none;-webkit-user-select:none}
+svg.board .ln{fill:none;stroke:var(--ink);stroke-width:2.2;stroke-linecap:square}
+svg.board .hit{fill:transparent;stroke:transparent;touch-action:none;cursor:grab}
+svg.board line.hit{stroke-width:18}
+svg.board .nm{font-family:var(--display);font-weight:600;font-size:16px;fill:var(--ink)}
+svg.board .sub{font-family:var(--body);font-weight:400;font-size:13px;fill:var(--ink-soft)}
+svg.board .dot{fill:var(--card);stroke:var(--ink);stroke-width:1.6}
+svg.board .ring{fill:var(--paper);stroke:var(--ink);stroke-width:1.6}
+svg.board .cutx{font-family:var(--hand);font-weight:700;font-size:20px;fill:var(--red);opacity:0;pointer-events:none}
+svg.board:not(.dragging) g.br:hover .ln{stroke:var(--red);stroke-dasharray:5 4}
+svg.board:not(.dragging) g.br:hover .cutx{opacity:1}
+svg.board:not(.dragging) g.stem:hover .ring{fill:var(--blue);stroke:var(--blue)}
+svg.board:not(.dragging) g.tipg:hover .nm{fill:var(--blue)}
+svg.board:not(.dragging) g.dotg:hover .dot{fill:var(--blue-wash);stroke:var(--blue)}
+svg.board.dragging,svg.board.dragging .hit{cursor:grabbing}
+svg.board .float{opacity:.72}
+svg.board .float .ln{stroke:var(--blue)}
+svg.board .tgt{fill:none;stroke:var(--blue);stroke-width:6;stroke-linecap:round;opacity:.55}
+svg.board .tgtring{fill:var(--blue-wash);stroke:var(--blue);stroke-width:2.5}
+svg.board .tgtbox{fill:var(--blue-wash);stroke:var(--blue);stroke-width:1.5;stroke-dasharray:4 3}
+svg.board .hint{font-family:var(--hand);font-size:17px;fill:var(--blue);paint-order:stroke;stroke:var(--paper);stroke-width:4px}
+svg.board .pen{fill:none;stroke-width:2.8;stroke-linecap:round;stroke-linejoin:round}
+svg.board .pen.y{stroke:var(--green)}
+svg.board .pen.n{stroke:var(--red)}
+svg.board .newfork{animation:pop .35s ease-out}
+@keyframes pop{from{r:11}to{r:4.5}}
+/* label phase */
+svg.board.labelling .slot{fill:var(--card);stroke:var(--ink);stroke-width:1.6;stroke-dasharray:3 2}
+svg.board .slot.on{fill:var(--blue-wash);stroke:var(--blue);stroke-width:2.5;stroke-dasharray:none}
+svg.board .plab text{font-family:var(--display);font-weight:600;font-size:15px;fill:var(--ink);paint-order:stroke;stroke:var(--paper);stroke-width:5px}
+svg.board .plab .zh{font-family:var(--body);font-weight:400;font-size:12px;fill:var(--ink-soft)}
+svg.board .plab.y text:first-of-type{fill:var(--green)}
+svg.board .plab.n text:first-of-type{fill:var(--red)}
+svg.board .plab .hit{cursor:grab}
+
+@media (max-width:700px){ h1{font-size:30px} .note{font-size:18px} .sep{display:none} }
+@media (prefers-reduced-motion: reduce){ *{animation:none!important;transition:none!important} }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div>
+    <div class="eyebrow">Intro biology · animal tree</div>
+    <h1>Build the Animal Tree</h1>
+    <p class="lede">Twelve groups are loose on the sheet. Join them into the lecture's tree, then name its clades. Two of its forks split three ways.</p>
+  </div>
+  <ol class="steps" aria-label="Steps">
+    <li id="st1">1 · Build the tree</li>
+    <li id="st2">2 · Name the clades</li>
+  </ol>
+</header>
+
+<div class="tools" role="toolbar" aria-label="Tools">
+  <button type="button" class="btn main" id="check">Check</button>
+  <button type="button" class="btn" id="undo" title="Ctrl+Z">Undo</button>
+  <button type="button" class="btn" id="tidy">Tidy the sheet</button>
+  <span class="sep" aria-hidden="true"></span>
+  <span class="seg" role="group" aria-label="Under each name"><span>under names</span><button type="button" data-sub="common">common</button><button type="button" data-sub="zh">中文</button><button type="button" data-sub="none">none</button></span>
+  <span class="sep" aria-hidden="true"></span>
+  <button type="button" class="btn" id="reveal">Show the answer</button>
+  <button type="button" class="btn" id="restart">Start over</button>
+</div>
+
+<details class="how" id="how" open>
+  <summary>How to build</summary>
+  <div class="howgrid">
+    <figure>
+      <svg class="mini" viewBox="0 0 200 60" aria-hidden="true">
+        <text x="6" y="35">A</text><text class="op" x="24" y="35">+</text><text x="40" y="35">B</text>
+        <text class="op" x="66" y="35">⇒</text>
+        <path class="l" d="M98 30H112M112 14V46M112 14H134M112 46H134"/><text x="139" y="19">A</text><text x="139" y="51">B</text>
+      </svg>
+      <figcaption><b>Drop a piece on a name or a branch</b> and the two pair up into a fork.</figcaption>
+    </figure>
+    <figure>
+      <svg class="mini" viewBox="0 0 200 60" aria-hidden="true">
+        <path class="l" d="M6 30H18M18 14V46M18 14H38M18 46H38"/><circle class="ring" cx="18" cy="30" r="5"/><text x="42" y="19">A</text><text x="42" y="51">B</text>
+        <text class="op" x="58" y="35">+</text><text x="72" y="35">C</text><text class="op" x="92" y="35">⇒</text>
+        <path class="l" d="M118 30H132M132 10V50M132 10H154M132 30H154M132 50H154"/><text x="159" y="15">A</text><text x="159" y="35">B</text><text x="159" y="55">C</text>
+      </svg>
+      <figcaption><b>Drop it on a fork's dot</b> and it joins that fork as one more branch (a three-way split). Clicking a dot flips its branches; order never matters.</figcaption>
+    </figure>
+    <figure>
+      <svg class="mini" viewBox="0 0 200 60" aria-hidden="true">
+        <path class="l" d="M6 30H18M18 14V46M18 14H40M18 46H40"/><text x="44" y="19">A</text><text x="44" y="51">B</text><text class="r" x="23" y="52">✗</text>
+        <text class="op" x="68" y="35">⇒</text>
+        <path class="l" d="M100 18H124"/><text x="128" y="23">A</text><text class="op" x="148" y="35">+</text><path class="l" d="M100 46H124"/><text x="128" y="51">B</text>
+      </svg>
+      <figcaption><b>Click a branch to cut it.</b> What's above the cut comes loose; a fork left with one branch disappears.</figcaption>
+    </figure>
+    <figure>
+      <svg class="mini" viewBox="0 0 200 60" aria-hidden="true">
+        <path class="l" d="M10 30H24M24 16V44M24 16H44M24 44H44"/><text x="48" y="21">A</text><text x="48" y="49">B</text><circle class="ring" cx="10" cy="30" r="5"/>
+        <path class="bl" d="M14 40C40 60 90 58 110 40" marker-end="url(#miniArrow)"/>
+        <path class="l" d="M124 30H138M138 16V44M138 16H158M138 44H158"/><text x="162" y="21">A</text><text x="162" y="49">B</text>
+        <defs><marker id="miniArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="var(--blue)"/></marker></defs>
+      </svg>
+      <figcaption><b>Drag the ring at a piece's base</b> to move the whole piece. Drag a name, branch or dot to pull out that part, with everything above it.</figcaption>
+    </figure>
+  </div>
+</details>
+
+<div class="note" id="note" aria-live="polite"></div>
+<div class="tray" id="tray" hidden></div>
+
+<div class="bench" id="bench">
+  <svg class="board" id="board" role="application" aria-label="Workbench: drag the pieces together to build the tree"></svg>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ======================================================================
+   DATA. This block is the only part to change for a different tree.
+   tips: id -> {n: name, s: common name, zh: Chinese}
+   tree: nested forks. A fork is {kids:[...]}, optionally with
+         label (a clade name to place in step 2), zh, and note (what to call
+         an unnamed fork in the exported record). A tip is its id string.
+   ====================================================================== */
+const SET = {
+  key: "intro-bio-animal-tree",
+  name: "Build the Animal Tree",
+  tips: {
+    choano:      {n:"Choanoflagellates", s:"collar-cell protists", zh:"领鞭毛虫"},
+    porifera:    {n:"Porifera",          s:"sponges",              zh:"多孔动物门"},
+    cnidaria:    {n:"Cnidaria",          s:"jellyfish, corals",    zh:"刺胞动物门"},
+    annelida:    {n:"Annelida",          s:"segmented worms",      zh:"环节动物门"},
+    gastropoda:  {n:"Gastropoda",        s:"snails, slugs",        zh:"腹足纲"},
+    bivalvia:    {n:"Bivalvia",          s:"clams, mussels",       zh:"双壳纲"},
+    cephalopoda: {n:"Cephalopoda",       s:"octopus, squid",       zh:"头足纲"},
+    nematoda:    {n:"Nematoda",          s:"roundworms",           zh:"线虫动物门"},
+    tardigrada:  {n:"Tardigrada",        s:"water bears",          zh:"缓步动物门"},
+    arthropoda:  {n:"Arthropoda",        s:"insects, spiders, crabs", zh:"节肢动物门"},
+    echinodermata:{n:"Echinodermata",    s:"sea stars, urchins",   zh:"棘皮动物门"},
+    chordata:    {n:"Chordata",          s:"us, and lancelets",    zh:"脊索动物门"}
+  },
+  tree: {note:"root", kids:[
+    "choano",
+    {label:"Metazoa", zh:"后生动物", kids:[
+      "porifera",
+      {note:"true-tissues", kids:[
+        "cnidaria",
+        {label:"Bilateria", zh:"两侧对称动物", kids:[
+          {label:"Protostomia", zh:"原口动物", kids:[
+            {label:"Lophotrochozoa", zh:"冠轮动物", kids:[
+              "annelida",
+              {label:"Mollusca", zh:"软体动物门", kids:["gastropoda","bivalvia","cephalopoda"]}
+            ]},
+            {label:"Ecdysozoa", zh:"蜕皮动物", kids:["nematoda","tardigrada","arthropoda"]}
+          ]},
+          {label:"Deuterostomia", zh:"后口动物", kids:["echinodermata","chordata"]}
+        ]}
+      ]}
+    ]}
+  ]}
+};
+
+/* ======================================================================
+   ENGINE
+   ====================================================================== */
+const $ = s => document.querySelector(s);
+const board = $("#board"), bench = $("#bench"), noteEl = $("#note"), tray = $("#tray");
+const TIP_IDS = Object.keys(SET.tips);
+const isTip = t => typeof t === "string";
+const tipsOf = t => isTip(t) ? [t] : t.kids.flatMap(tipsOf);
+const keyOf = t => tipsOf(t).slice().sort().join("|");
+const FULL = TIP_IDS.slice().sort().join("|");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* answer: every fork's tip set, plus the labels */
+const ANS = new Map();    // key -> {label, zh, note}
+const LABELS = [];        // {name, zh, key}
+(function walk(t){ if (isTip(t)) return; const k = keyOf(t); ANS.set(k, {label:t.label||"", zh:t.zh||"", note:t.note||""}); if (t.label) LABELS.push({name:t.label, zh:t.zh||"", key:k}); t.kids.forEach(walk); })(SET.tree);
+const ANS_KEYS = [...ANS.keys()].filter(k => k !== FULL);   // the forks that count (the root is trivially right once everything is joined)
+
+/* geometry per step */
+const GEO = { build:{DX:30, DY:36, STEM:26, X0:14}, label:{DX:134, DY:46, STEM:34, X0:170} };
+function geo(){
+  if (S.phase === "build") return GEO.build;
+  const g = GEO.label, p = S.pieces[0];
+  if (!p) return g;
+  const H = height(p.t), tipMax = Math.max(...TIP_IDS.map(tipW)) + 30;
+  const narrow = bench.clientWidth < 700, X0 = narrow ? 120 : g.X0;
+  const DX = Math.max(narrow ? 96 : 118, Math.min(g.DX, Math.floor((bench.clientWidth - X0 - g.STEM - tipMax - 20) / H)));
+  return {DX, DY:g.DY, STEM:g.STEM, X0};
+}
+function edgeScroll(e){
+  const r = bench.getBoundingClientRect();
+  if (e.clientX > r.right - 36) bench.scrollLeft += 16; else if (e.clientX < r.left + 36) bench.scrollLeft -= 16;
+  if (e.clientY > innerHeight - 30) window.scrollBy(0, 14); else if (e.clientY < 30) window.scrollBy(0, -14);
+}
+
+/* text measuring (canvas, same fonts as the SVG) */
+const mctx = document.createElement("canvas").getContext("2d");
+function tw(txt, font){ mctx.font = font; return mctx.measureText(txt).width; }
+const F_NM = '600 16px "Source Serif 4", Georgia, serif', F_SUB = '400 13px "Atkinson Hyperlegible", system-ui, sans-serif', F_LAB = '600 15px "Source Serif 4", Georgia, serif', F_LZH = '400 12px "Atkinson Hyperlegible", system-ui, sans-serif';
+function subOf(id){ const t = SET.tips[id]; return S.sub === "common" ? t.s : S.sub === "zh" ? t.zh : ""; }
+function tipW(id){ const sub = subOf(id); return tw(SET.tips[id].n, F_NM) + (sub ? 7 + tw(sub, S.sub === "zh" ? '400 13px "Microsoft YaHei", sans-serif' : F_SUB) : 0); }
+
+/* ---------- state ---------- */
+const STORE = "treebuilder." + SET.key + ".v1";
+const SIG = JSON.stringify(SET.tree);   // a saved board is dropped if the answer tree changes
+let S = null;
+let undoStack = [];
+function shuffle(a){ a = [...a]; for (let i = a.length-1; i > 0; i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]] = [a[j],a[i]]; } return a; }
+function fresh(){
+  S = { sig:SIG, phase:"build", pieces: shuffle(TIP_IDS).map(id => ({x:0, y:0, t:id})), nid:0, placed:{}, tray:shuffle(LABELS.map(l=>l.name)),
+        sub:(S && S.sub) || "common", marks:{}, lmarks:{}, msg:null,
+        log:{t0:Date.now(), checks:0, marks:0, wrong:[], revealed:false, tBuilt:0, lchecks:0, lmarks:0, lwrong:[], lrevealed:false, tDone:0} };
+  undoStack = [];
+  tidy();
+}
+function save(){ try { localStorage.setItem(STORE, JSON.stringify(S)); } catch(e){} }
+function load(){
+  try {
+    const o = JSON.parse(localStorage.getItem(STORE) || "null");
+    if (!o || !Array.isArray(o.pieces) || !o.log) return false;
+    const seen = o.pieces.flatMap(p => tipsOf(p.t)).sort().join("|");
+    if (seen !== FULL || o.sig !== SIG) return false;
+    const sound = t => isTip(t) || (t && Array.isArray(t.kids) && t.kids.length >= 2 && t.kids.every(sound));
+    if (!o.pieces.every(p => sound(p.t)) || (o.phase !== "build" && o.pieces.length !== 1)) return false;
+    S = o; return true;
+  } catch(e){ return false; }
+}
+function snap(){ return JSON.stringify({pieces:S.pieces, placed:S.placed, nid:S.nid}); }
+function pushUndo(){ undoStack.push(snap()); if (undoStack.length > 120) undoStack.shift(); }
+function undo(){
+  if (drag) return;
+  const s = undoStack.pop(); if (!s) return;
+  const o = JSON.parse(s); S.pieces = o.pieces; S.placed = o.placed; S.nid = o.nid; S.marks = {}; S.lmarks = {};
+  say(null); save(); render();
+}
+
+/* ---------- tree surgery ---------- */
+const getAt = (t, path) => path.reduce((n, i) => n.kids[i], t);
+function setAt(piece, path, val){ if (!path.length) piece.t = val; else getAt(piece.t, path.slice(0,-1)).kids[path[path.length-1]] = val; }
+function newFork(kids){ return {id:"f" + (++S.nid), kids}; }
+function detach(piece, path){   // remove the subtree at path; a fork left with one branch dissolves
+  const pp = path.slice(0,-1), i = path[path.length-1];
+  const parent = getAt(piece.t, pp);
+  const sub = parent.kids.splice(i, 1)[0];
+  if (parent.kids.length === 1) setAt(piece, pp, parent.kids[0]);
+  return sub;
+}
+function cloneAnswer(t){ return isTip(t) ? t : newFork(t.kids.map(cloneAnswer)); }
+
+/* ---------- layout ---------- */
+function height(t){ return isTip(t) ? 0 : 1 + Math.max(...t.kids.map(height)); }
+function layout(p){
+  const g = geo(), H = height(p.t), nodes = [];
+  let i = 0, right = 0;
+  (function rec(t, path, px){
+    const x = g.STEM + (H - height(t)) * g.DX;
+    let y;
+    if (isTip(t)){ y = (i++) * g.DY; const w = tipW(t); right = Math.max(right, x + 10 + w); nodes.push({t, path, x, y, px, tip:true, w}); }
+    else {
+      const node = {t, path, x, px, tip:false}; nodes.push(node);
+      const ys = t.kids.map((k, j) => rec(k, path.concat(j), x));
+      y = (ys[0] + ys[ys.length-1]) / 2; node.y = y; node.ky0 = ys[0]; node.ky1 = ys[ys.length-1]; node.kys = ys;
+    }
+    return y;
+  })(p.t, [], 0);
+  const root = nodes.find(n => !n.path.length);
+  return {nodes, root, right, bottom:(i-1) * g.DY, n:i};
+}
+let LAY = new Map();
+function lay(p){ let L = LAY.get(p); if (!L){ L = layout(p); LAY.set(p, L); } return L; }
+function boxOf(p){ const L = lay(p); const left = S.phase === "build" ? 8 : geo().X0 - 20; return {x0:p.x - left, y0:p.y - 20, x1:p.x + L.right + 10, y1:p.y + L.bottom + 18}; }
+const overlap = (a, b) => a.x0 < b.x1 + 8 && b.x0 < a.x1 + 8 && a.y0 < b.y1 + 6 && b.y0 < a.y1 + 6;
+function benchW(){ return Math.max(320, bench.clientWidth - 4); }
+function clampPiece(p){ const g = geo(); p.x = Math.max(g.X0, Math.min(p.x, benchW() - 160)); p.y = Math.max(28, p.y); }
+function resolve(fixed){   // the piece just acted on stays put; others slide down out of its way
+  LAY = new Map();
+  const order = [...S.pieces].sort((a, b) => a === fixed ? -1 : b === fixed ? 1 : a.y - b.y);
+  const done = [];
+  order.forEach(p => {
+    clampPiece(p);
+    let hit, guard = 0;
+    while ((hit = done.find(q => overlap(boxOf(p), boxOf(q)))) && guard++ < 60) p.y += boxOf(hit).y1 - boxOf(p).y0 + 8;
+    done.push(p);
+  });
+}
+function tidy(){   // shelf-pack: biggest pieces first, left to right, then the next row
+  LAY = new Map();
+  const W = benchW(), g = geo();
+  const list = [...S.pieces].sort((a, b) => lay(b).n - lay(a).n || lay(b).right - lay(a).right);
+  let x = g.X0, y = 30, rowH = 0;
+  list.forEach(p => {
+    const L = lay(p), w = L.right + 28, h = L.bottom + 40;
+    if (x > g.X0 && x + w > W){ x = g.X0; y += rowH; rowH = 0; }
+    p.x = x + (S.phase === "label" ? 0 : 0); p.y = y + 4;
+    x += w; rowH = Math.max(rowH, h);
+  });
+}
+
+/* ---------- rendering ---------- */
+let drag = null;    // active drag (build or label)
+function pathStr(p){ return p.join("."); }
+function parsePath(s){ return s === "" ? [] : s.split(".").map(Number); }
+
+function pieceSvg(p, pi, float){
+  const L = lay(p), g = geo(), R = L.root;
+  const labelling = S.phase !== "build";
+  let s = `<g class="piece${float ? " float" : ""}" transform="translate(${p.x},${p.y})">`;
+  const d = (k, path) => labelling ? "" : `data-k="${k}" data-pi="${pi}" data-path="${pathStr(path)}"`;
+  // the piece's own stem, with its ring
+  s += `<g class="stem"><line class="ln" x1="0" y1="${R.y}" x2="${R.x}" y2="${R.y}"/>`;
+  if (!labelling) s += `<line class="hit" ${d("stem", [])} x1="-6" y1="${R.y}" x2="${R.x}" y2="${R.y}"><title>Drag to move this piece</title></line><circle class="ring" cx="0" cy="${R.y}" r="5.5"/><circle class="hit" ${d("stem", [])} cx="0" cy="${R.y}" r="12"><title>Drag to move this piece</title></circle>`;
+  s += `</g>`;
+  L.nodes.forEach(n => {
+    if (n.path.length){
+      s += `<g class="br"><line class="ln" x1="${n.px}" y1="${n.y}" x2="${n.x}" y2="${n.y}"/>`;
+      if (!labelling) s += `<text class="cutx" x="${(n.px + n.x)/2 - 6}" y="${n.y + 7}">✗</text><line class="hit" ${d("br", n.path)} x1="${n.px + 4}" y1="${n.y}" x2="${n.x - 6}" y2="${n.y}"><title>Click to cut · drag to pull this part out</title></line>`;
+      s += `</g>`;
+    }
+    if (!n.tip){
+      s += `<line class="ln" x1="${n.x}" y1="${n.ky0}" x2="${n.x}" y2="${n.ky1}"/>`;
+    }
+  });
+  L.nodes.forEach(n => {
+    if (n.tip){
+      const t = SET.tips[n.t], sub = subOf(n.t);
+      s += `<g class="tipg"><text class="nm" x="${n.x + 8}" y="${n.y + 5}">${esc(t.n)}${sub ? `<tspan class="sub" dx="7">${esc(sub)}</tspan>` : ""}</text>`;
+      if (!labelling) s += `<rect class="hit" ${d("tip", n.path)} x="${n.x + 2}" y="${n.y - 15}" width="${n.w + 14}" height="30"><title>Drag to pull out${n.path.length ? "" : " (or move)"}</title></rect>`;
+      s += `</g>`;
+    } else if (labelling){
+      s += `<circle class="slot${drag && drag.slot === n.t.id ? " on" : ""}" cx="${n.x}" cy="${n.y}" r="${drag && drag.slot === n.t.id ? 9 : 6}"/>`;
+    } else {
+      s += `<g class="dotg"><circle class="dot${n.t.id === lastFork ? " newfork" : ""}" cx="${n.x}" cy="${n.y}" r="4.5"/><circle class="hit" ${d("dot", n.path)} cx="${n.x}" cy="${n.y}" r="9"><title>Click to flip the branches · drag to pull this group out · drop a piece here to add a branch</title></circle></g>`;
+    }
+  });
+  return s + `</g>`;
+}
+
+function overlaySvg(){
+  let s = "";
+  // fork marks (step 1)
+  if (S.phase === "build" && Object.keys(S.marks).length){
+    S.pieces.forEach(p => lay(p).nodes.forEach(n => {
+      if (n.tip || !(n.t.id in S.marks)) return;
+      const ok = S.marks[n.t.id];
+      s += penMark(ok, p.x + n.x - 15, p.y + n.y - 12);
+    }));
+  }
+  // placed labels (step 2)
+  if (S.phase !== "build"){
+    const p = S.pieces[0];
+    lay(p).nodes.forEach(n => {
+      if (n.tip) return;
+      const name = S.placed[n.t.id]; if (!name || (drag && drag.label === name && drag.lifted)) return;
+      const lb = LABELS.find(l => l.name === name), w = Math.max(tw(name, F_LAB), tw(lb.zh, F_LZH));
+      const mk = n.t.id in S.lmarks ? (S.lmarks[n.t.id] ? " y" : " n") : "";
+      const X = p.x + n.x - 9, Y = p.y + n.y - 9;
+      s += `<g class="plab${mk}"><text x="${X}" y="${Y}" text-anchor="end">${esc(name)}</text><text class="zh" x="${X}" y="${Y + 25}" text-anchor="end">${esc(lb.zh)}</text>`;
+      if (S.phase === "label") s += `<rect class="hit" data-k="lab" data-node="${n.t.id}" x="${X - w - 4}" y="${Y - 16}" width="${w + 8}" height="${S.lmarks[n.t.id] === false ? 22 : 22}"><title>Drag to move or take off</title></rect>`;
+      if (mk) s += penMark(mk === " y", X - tw(lb.zh, F_LZH) - 14, Y + 20);
+      s += `</g>`;
+    });
+  }
+  if (drag && drag.moving && drag.target) s += `<text class="hint" x="${drag.pt.x - 14}" y="${drag.pt.y - 12}" text-anchor="end">${esc(drag.target.hint)}</text>`;
+  return s;
+}
+function targetSvg(){   // drawn under the pieces so the floating piece never hides it
+  if (!(drag && drag.moving && drag.target)) return "";
+  const tg = drag.target, p = tg.piece, n = tg.node;
+  if (tg.kind === "dot") return `<circle class="tgtring" cx="${p.x + n.x}" cy="${p.y + n.y}" r="11"/>`;
+  if (n.tip) return `<rect class="tgtbox" x="${p.x + n.x + 2}" y="${p.y + n.y - 15}" width="${n.w + 14}" height="30" rx="4"/>`;
+  return `<line class="tgt" x1="${p.x + (n.path.length ? n.px : 0)}" y1="${p.y + n.y}" x2="${p.x + n.x}" y2="${p.y + n.y}"/>`;
+}
+function penMark(ok, x, y){   // a hand-drawn tick or cross centred on (x, y)
+  return ok ? `<path class="pen y" d="M${x-7} ${y} L${x-2} ${y+6} L${x+8} ${y-8}"/>`
+            : `<path class="pen n" d="M${x-6} ${y-6} L${x+6} ${y+6} M${x+6} ${y-6} L${x-6} ${y+6}"/>`;
+}
+
+let lastFork = null, lastCut = {t:0, x:-99, y:-99};   // a double click on one spot cuts once
+function render(){
+  LAY = new Map();
+  const others = S.pieces.filter(p => !(drag && drag.float === p));
+  let body = targetSvg();
+  others.forEach(p => body += pieceSvg(p, S.pieces.indexOf(p), false));
+  if (drag && drag.float) body += pieceSvg(drag.float, S.pieces.indexOf(drag.float), true);
+  let W = benchW(), H = 420;
+  S.pieces.forEach(p => { const b = boxOf(p); W = Math.max(W, b.x1 + 30); H = Math.max(H, b.y1 + 60); });
+  board.setAttribute("width", W); board.setAttribute("height", H);
+  board.innerHTML = body + overlaySvg();
+  board.classList.toggle("dragging", !!(drag && drag.moving));
+  board.classList.toggle("labelling", S.phase !== "build");
+  lastFork = null;
+  renderChrome();
+}
+
+function renderChrome(){
+  const b = S.phase === "build";
+  $("#st1").className = b ? "now" : "done";
+  $("#st2").className = S.phase === "label" ? "now" : S.phase === "done" ? "done" : "";
+  $("#st1").textContent = (b ? "1" : "✓") + " · Build the tree";
+  $("#st2").textContent = (S.phase === "done" ? "✓" : "2") + " · Name the clades";
+  $("#check").disabled = S.phase === "done";
+  $("#tidy").disabled = !b;
+  $("#undo").disabled = !undoStack.length || S.phase === "done";
+  $("#reveal").disabled = S.phase === "done";
+  document.querySelectorAll("[data-sub]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.sub === S.sub)));
+  how.hidden = !b;
+  // tray
+  tray.hidden = S.phase !== "label";
+  if (S.phase === "label"){
+    const left = S.tray.filter(n => !Object.values(S.placed).includes(n));
+    tray.innerHTML = `<span class="lab">Clade names</span>` + (left.length ? left.map(n => { const l = LABELS.find(x => x.name === n); return `<span class="chip${drag && drag.label === n ? " lifted" : ""}" data-label="${esc(n)}">${esc(n)}<span class="zh">${esc(l.zh)}</span></span>`; }).join("") : `<span class="lab" style="text-transform:none;letter-spacing:0;font-family:var(--body);font-size:14px">All placed. Press Check.</span>`);
+  }
+  // note
+  if (!S.msg) S.msg = defaultMsg();
+  const m = S.msg;
+  noteEl.className = "note" + (m.tone ? " " + m.tone : "");
+  noteEl.innerHTML = `<span class="msg">${m.html}</span>` + (m.btns || []).map(([id, txt]) => `<button type="button" class="btn" data-act="${id}">${txt}</button>`).join("") + (m.extra || "");
+}
+function defaultMsg(){
+  if (S.phase === "build"){
+    const n = S.pieces.length;
+    return {html: n === 1 ? "Everything is joined. Press Check when you're happy with it." : `${n} loose pieces on the sheet. Join them into one tree, then press Check.`};
+  }
+  if (S.phase === "label") return {html:"Drag each clade name onto the dot of the fork it names. Two forks have no name in the lecture; leave them empty."};
+  return {html:"Done."};
+}
+function say(html, tone, btns, extra){ S.msg = html == null ? null : {html, tone:tone || "", btns:btns || [], extra:extra || ""}; }
+
+/* ---------- step 1: pointer handling ---------- */
+function svgPt(e){ const r = board.getBoundingClientRect(); return {x:e.clientX - r.left, y:e.clientY - r.top}; }
+function segDist(px, py, x1, x2, y){ const cx = Math.max(Math.min(px, Math.max(x1, x2)), Math.min(x1, x2)); return Math.hypot(px - cx, py - y); }
+function findTarget(pt, float){
+  let best = null, bestD = 1e9, dot = null, dotD = 1e9;
+  S.pieces.forEach(p => {
+    if (p === float) return;
+    lay(p).nodes.forEach(n => {
+      const X = p.x + n.x, Y = p.y + n.y;
+      if (!n.tip){ const dd = Math.hypot(pt.x - X, pt.y - Y); if (dd < 11 && dd < dotD){ dot = {piece:p, node:n}; dotD = dd; } }
+      const d1 = segDist(pt.x, pt.y, p.x + (n.path.length ? n.px : 0), X, Y);
+      if (d1 < 15 && d1 < bestD){ best = {piece:p, node:n}; bestD = d1; }
+      if (n.tip && pt.x >= X && pt.x <= X + n.w + 18 && Math.abs(pt.y - Y) <= 16){ const d2 = Math.abs(pt.y - Y) / 2; if (d2 < bestD){ best = {piece:p, node:n}; bestD = d2; } }
+    });
+  });
+  const nm = n => n.tip ? SET.tips[n.t].n : "this group";
+  if (dot) return {...dot, kind:"dot", hint:`add as one more branch (${dot.node.t.kids.length + 1}-way)`};
+  if (best) return {...best, kind:"pair", hint:`pair with ${nm(best.node)}`};
+  return null;
+}
+board.addEventListener("pointerdown", e => {
+  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+  if (S.phase !== "build" || e.button > 0) return;
+  const h = e.target.closest("[data-k]"); if (!h) return;
+  e.preventDefault();
+  const pi = +h.dataset.pi, piece = S.pieces[pi];
+  drag = {kind:h.dataset.k, piece, path:parsePath(h.dataset.path), start:svgPt(e), pt:svgPt(e), moving:false, id:e.pointerId};
+  try { board.setPointerCapture(e.pointerId); } catch(err){}
+});
+board.addEventListener("pointermove", e => {
+  if (!drag || drag.id !== e.pointerId || drag.label) return;
+  const pt = svgPt(e); drag.pt = pt;
+  if (!drag.moving){
+    if (Math.hypot(pt.x - drag.start.x, pt.y - drag.start.y) < 5) return;
+    pushUndo(); drag.undoMark = undoStack.length;
+    S.marks = {};
+    const g = geo();
+    if (!drag.path.length){            // the whole piece: held where it was grabbed, or by its ring if grabbed by the name
+      drag.float = drag.piece;
+      drag.off = drag.kind === "stem" ? {x:pt.x - drag.piece.x, y:pt.y - drag.piece.y} : {x:0, y:lay(drag.piece).root.y};
+    } else {                            // pull the part out, with everything above it; it hangs from its ring
+      const sub = detach(drag.piece, drag.path);
+      const np = {x:0, y:0, t:sub}; S.pieces.push(np); LAY = new Map();
+      drag.off = {x:0, y:lay(np).root.y};
+      drag.float = np;
+    }
+    drag.moving = true;
+  }
+  drag.float.x = pt.x - drag.off.x; drag.float.y = pt.y - drag.off.y;
+  drag.target = findTarget(pt, drag.float);
+  edgeScroll(e);
+  render();
+});
+function endDrag(e, cancel){
+  if (!drag || drag.label || (e && drag.id !== e.pointerId)) return;
+  const d = drag; drag = null;
+  if (d.moving && !S.pieces.includes(d.float)) return render();   // the board was reset under the drag
+  if (!d.moving){                       // a click
+    if (cancel) return render();
+    if (d.kind === "br" && d.path.length){ const t = Date.now(), near = Math.hypot(d.start.x - lastCut.x, d.start.y - lastCut.y) < 8; if (!(near && t - lastCut.t < 450)){ lastCut = {t, x:d.start.x, y:d.start.y}; cut(d.piece, d.path); } }
+    else if (d.kind === "dot"){ pushUndo(); const n = getAt(d.piece.t, d.path); n.kids.reverse(); S.marks = {}; say(null); save(); render(); }
+    return;
+  }
+  if (cancel){ undo(); return; }
+  if (d.target){
+    const tg = d.target, sub = d.float.t;
+    S.pieces = S.pieces.filter(p => p !== d.float);
+    const path = tg.node.path;
+    if (tg.kind === "dot"){
+      const node = getAt(tg.piece.t, path);
+      const ys = tg.node.kys.map(y => tg.piece.y + y);
+      let idx = ys.findIndex(y => d.pt.y < y); if (idx < 0) idx = ys.length;
+      node.kids.splice(idx, 0, sub);
+    } else {
+      const cur = getAt(tg.piece.t, path);
+      const above = d.pt.y < tg.piece.y + tg.node.y;
+      const f = newFork(above ? [sub, cur] : [cur, sub]); lastFork = f.id;
+      setAt(tg.piece, path, f);
+    }
+    resolve(tg.piece);
+  } else resolve(d.float);
+  say(null); save(); render();
+}
+board.addEventListener("touchstart", e => { if (e.target.closest("[data-k]")) e.preventDefault(); }, {passive:false});
+board.addEventListener("touchmove", e => { if (drag) e.preventDefault(); }, {passive:false});
+board.addEventListener("pointerup", e => endDrag(e, false));
+board.addEventListener("pointercancel", e => endDrag(e, true));
+function cut(piece, path){
+  pushUndo();
+  LAY = new Map();
+  const before = lay(piece), n = before.nodes.find(x => pathStr(x.path) === pathStr(path));
+  const sub = detach(piece, path);
+  const np = {x:piece.x + n.px + 26, y:piece.y + (isTip(sub) ? n.y : n.y - lay({t:sub}).root.y) + 22, t:sub};
+  S.pieces.push(np); S.marks = {};
+  resolve(piece);
+  say(null); save(); render();
+}
+
+/* ---------- step 1: checking ---------- */
+function forksOf(t, out){ if (!isTip(t)){ out.push({id:t.id, key:keyOf(t)}); t.kids.forEach(k => forksOf(k, out)); } return out; }
+/* A fork inside a loose piece is fine when its tip set equals (some answer clade ∩ that piece's tips):
+   the piece can still grow into the answer without cutting it. Once everything is joined this is the exact test. */
+function allForks(){
+  const out = [];
+  S.pieces.forEach(p => {
+    const P = new Set(tipsOf(p.t)), fits = new Set();
+    ANS.forEach((v, k) => { const r = k.split("|").filter(id => P.has(id)); if (r.length >= 2) fits.add(r.join("|")); });
+    forksOf(p.t, []).forEach(f => { if (f.key !== FULL) out.push({id:f.id, key:f.key, ok:fits.has(f.key)}); });
+  });
+  return out;
+}
+/* answer forks that split three or more ways, for the "pair two first" hint */
+const POLY = [];
+(function walk(t){ if (isTip(t)) return; if (t.kids.length > 2) POLY.push({set:new Set(tipsOf(t)), kids:t.kids.map(k => new Set(tipsOf(k))), names:t.kids.map(k => isTip(k) ? SET.tips[k].n : (k.label || "a group"))}); t.kids.forEach(walk); })(SET.tree);
+function polyHint(bad){
+  const hits = [];
+  bad.forEach(f => {
+    const B = f.key.split("|");
+    const P = POLY.find(a => B.every(id => a.set.has(id)) && a.kids.every(K => { const n = B.filter(id => K.has(id)).length; return n === 0 || n === K.size; }));
+    if (P && !hits.includes(P)) hits.push(P);
+  });
+  if (!hits.length) return "";
+  const list = n => n.slice(0, -1).join(", ") + " and " + n[n.length-1];
+  return " " + hits.map(P => `The lecture leaves ${list(P.names)} as one ${P.names.length}-way split, so don't pair two of them first: drop the third onto the dot.`).join(" ");
+}
+const namesOf = key => key.split("|").map(id => SET.tips[id].n);
+function checkTree(){
+  const fs = allForks(), good = fs.filter(f => ANS.has(f.key)), bad = fs.filter(f => !f.ok);
+  S.log.checks++;
+  bad.forEach(b => { if (!S.log.wrong.includes(b.key)) S.log.wrong.push(b.key); });
+  const found = new Set(good.map(f => f.key)).size, N = ANS_KEYS.length, loose = S.pieces.length;
+  if (loose === 1 && !bad.length && found === N){ return success(); }
+  let h;
+  const hint = polyHint(bad), nb = bad.length, them = nb === 1 ? "1 of your forks can't" : `${nb} of your forks can't`;
+  if (loose > 1) h = `Still ${loose} loose pieces. ` + (nb ? `${them} be part of the lecture's tree.` : `Everything you've joined so far fits the lecture's tree.`) + hint;
+  else if (nb && found === N) h = `Close: all ${N} of the lecture's forks are there, plus ${nb} extra.` + (hint || ` ${them} be part of its tree.`);
+  else if (nb) h = `Not yet. ${found} of the lecture's ${N} forks are there; ${them} be part of its tree.` + hint;
+  else h = `Not yet. Nothing you've grouped is wrong, but ${N - found} fork${N - found === 1 ? "" : "s"} still ${N - found === 1 ? "needs" : "need"} splitting into smaller groups.`;
+  say(h, "no", fs.length ? [["mark", "Mark my forks"]] : []);
+  save(); render();
+}
+function markForks(){
+  S.log.marks++;
+  const fs = allForks(); S.marks = {}; fs.forEach(f => S.marks[f.id] = f.ok);
+  const bad = fs.filter(f => !f.ok);
+  say(bad.length ? `A red ✗ fork can't be part of the lecture's tree. Cut it or pull it apart.` + polyHint(bad) : `Every fork you've made fits (✓). What's left is still loose, or lumped into a fork that needs splitting.`, bad.length ? "no" : "", []);
+  save(); render();
+}
+function success(){
+  S.log.tBuilt = Date.now();
+  S.phase = "label"; S.marks = {}; S.placed = {}; S.lmarks = {}; undoStack = [];
+  const p = S.pieces[0]; p.x = geo().X0; p.y = 40; LAY = new Map();
+  say(S.log.revealed ? "Here is the lecture's tree. Now drag each clade name onto the dot of the fork it names." : `Correct! Every fork matches the lecture's tree. Now drag each clade name onto the dot of the fork it names.`, "ok");
+  save(); render();
+  bench.scrollLeft = 0;
+}
+
+/* ---------- step 2: labels ---------- */
+function slotAt(pt){
+  const p = S.pieces[0]; let best = null, bd = 34;
+  lay(p).nodes.forEach(n => { if (n.tip) return; const d = Math.hypot(pt.x - (p.x + n.x), pt.y - (p.y + n.y)); if (d < bd){ bd = d; best = n.t.id; } });
+  return best;
+}
+let ghost = null;
+function startLabelDrag(e, name, fromNode){
+  e.preventDefault();
+  drag = {label:name, from:fromNode || null, id:e.pointerId, start:{x:e.clientX, y:e.clientY}, lifted:false, slot:null};
+  try { e.target.setPointerCapture(e.pointerId); } catch(err){}
+}
+function moveLabelDrag(e){
+  if (!drag || !drag.label || drag.id !== e.pointerId) return;
+  if (!drag.lifted){
+    if (Math.hypot(e.clientX - drag.start.x, e.clientY - drag.start.y) < 4) return;
+    drag.lifted = true;
+    const l = LABELS.find(x => x.name === drag.label);
+    ghost = document.createElement("span"); ghost.className = "chip ghost"; ghost.innerHTML = `${esc(l.name)}<span class="zh">${esc(l.zh)}</span>`; document.body.appendChild(ghost);
+  }
+  ghost.style.left = e.clientX + "px"; ghost.style.top = e.clientY + "px";
+  const slot = slotAt(svgPt(e));
+  if (slot !== drag.slot || !drag.drawn){ drag.slot = slot; drag.drawn = true; render(); }
+  edgeScroll(e);
+}
+function endLabelDrag(e, cancel){
+  if (!drag || !drag.label || (e && drag.id !== e.pointerId)) return;
+  const d = drag; drag = null;
+  if (ghost){ ghost.remove(); ghost = null; }
+  if (!d.lifted || cancel){ render(); return; }
+  pushUndo();
+  if (d.from) delete S.placed[d.from];
+  if (d.slot){
+    for (const k in S.placed) if (S.placed[k] === d.label) delete S.placed[k];
+    S.placed[d.slot] = d.label;      // whatever was there goes back to the tray
+  }
+  S.lmarks = {}; say(null); save(); render();
+}
+tray.addEventListener("pointerdown", e => { const c = e.target.closest(".chip"); if (c && S.phase === "label" && e.button <= 0) startLabelDrag(e, c.dataset.label); });
+board.addEventListener("pointerdown", e => {
+  if (S.phase !== "label" || e.button > 0) return;
+  const h = e.target.closest('[data-k="lab"]'); if (!h) return;
+  startLabelDrag(e, S.placed[h.dataset.node], h.dataset.node);
+});
+window.addEventListener("pointermove", moveLabelDrag);
+window.addEventListener("pointerup", e => endLabelDrag(e, false));
+window.addEventListener("pointercancel", e => endLabelDrag(e, true));
+
+function nodeKeys(){ const m = {}; forksOf(S.pieces[0].t, []).forEach(f => m[f.id] = f.key); return m; }
+function forkDesc(key){ const a = ANS.get(key); if (!a) return "the fork for " + namesOf(key).join(" + "); if (a.label) return `the ${a.label} fork`; if (a.note === "root") return "the root"; return `the ${a.note} fork`; }
+function checkLabels(){
+  const keys = nodeKeys(), N = LABELS.length;
+  let right = 0, wrongNow = [];
+  for (const id in S.placed){
+    const l = LABELS.find(x => x.name === S.placed[id]);
+    if (keys[id] === l.key) right++;
+    else { const rec = `${l.name} on ${forkDesc(keys[id])}`; wrongNow.push(rec); if (!S.log.lwrong.includes(rec)) S.log.lwrong.push(rec); }
+  }
+  S.log.lchecks++;
+  const placedN = Object.keys(S.placed).length;
+  if (right === N) return finish();
+  let h = `${right} of ${N} names are on the right fork.`;
+  if (placedN < N) h += ` ${N - placedN} still in the tray.`;
+  say(h, "no", placedN ? [["lmark", "Mark my names"]] : []);
+  save(); render();
+}
+function markLabels(){
+  S.log.lmarks++;
+  const keys = nodeKeys(); S.lmarks = {};
+  for (const id in S.placed){ const l = LABELS.find(x => x.name === S.placed[id]); S.lmarks[id] = keys[id] === l.key; }
+  const nBad = Object.values(S.lmarks).filter(v => !v).length;
+  say(nBad ? "Red names are on the wrong fork. Drag them somewhere else." : "Every name you've placed is right (✓). Place the rest.", nBad ? "no" : "");
+  save(); render();
+}
+function finish(){
+  S.log.tDone = Date.now(); S.phase = "done"; S.lmarks = {}; undoStack = [];
+  const keys = nodeKeys(); for (const id in S.placed) S.lmarks[id] = true;
+  say(S.log.revealed || S.log.lrevealed ? "That's the whole tree, named." : "Every clade is named. Tree done!", "ok", [["copy", "Copy record as Markdown"], ["again", "Build it again"]], summaryHtml());
+  save(); render();
+}
+
+/* ---------- record ---------- */
+function mins(a, b){ const m = Math.round((b - a) / 60000); return m < 1 ? "under a minute" : m + " min"; }
+function lines(){
+  const L = S.log, out = [];
+  out.push(L.revealed ? `Tree: answer shown after ${L.checks} check${L.checks === 1 ? "" : "s"}` : `Tree: correct after ${L.checks} check${L.checks === 1 ? "" : "s"}${L.marks ? ` (forks marked ${L.marks}×)` : ""}, ${mins(L.t0, L.tBuilt)}`);
+  if (L.wrong.length) out.push(`Groupings I tried that can't be part of the lecture's tree: ` + L.wrong.map(k => namesOf(k).join(" + ")).join("; "));
+  out.push(L.lrevealed ? `Clade names: answer shown after ${L.lchecks} check${L.lchecks === 1 ? "" : "s"}` : `Clade names: all right after ${L.lchecks} check${L.lchecks === 1 ? "" : "s"}${L.lmarks ? ` (marked ${L.lmarks}×)` : ""}, ${mins(L.tBuilt, L.tDone)}`);
+  if (L.lwrong.length) out.push(`Names I put on the wrong fork: ` + L.lwrong.join("; "));
+  return out;
+}
+function summaryHtml(){ return `<ul class="summary">${lines().map(l => `<li>${esc(l)}</li>`).join("")}</ul>`; }
+function pagePath(){ try { let p = decodeURIComponent(location.pathname); if (location.protocol === "file:"){ p = p.replace(/^\/([A-Za-z]:)/, "$1").replace(/\//g, "\\"); return p; } return location.href.split("#")[0]; } catch(e){ return location.href; } }
+function stamp(){ const d = new Date(), z = n => String(n).padStart(2, "0"); return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}`; }
+function copyRecord(btn){
+  const md = [`Page: ${pagePath()}`, ``, `## ${SET.name} · ${stamp()}`, ``, ...lines().map(l => `- ${l}`)].join("\n");
+  const done = () => { btn.textContent = "Copied"; };
+  const fallback = () => {
+    S.msg.extra = summaryHtml() + `<textarea id="recordText" aria-label="Record as Markdown" readonly>${esc(md)}</textarea>`;
+    S.msg.btns = S.msg.btns.map(([id, t]) => id === "copy" ? [id, "Copy blocked: select the text below"] : [id, t]);
+    save(); render(); const ta = $("#recordText"); ta.focus(); ta.select();
+  };
+  try { navigator.clipboard.writeText(md).then(done, fallback); } catch(e){ fallback(); }
+}
+
+/* ---------- buttons ---------- */
+function confirmBtn(btn, armText, action){
+  if (drag) return;
+  if (btn.classList.contains("arm")){ clearTimeout(btn._t); btn.classList.remove("arm"); btn.textContent = btn._orig; action(); return; }
+  btn._orig = btn.textContent; btn.textContent = armText; btn.classList.add("arm");
+  btn._t = setTimeout(() => { btn.classList.remove("arm"); btn.textContent = btn._orig; }, 3500);
+}
+$("#check").addEventListener("click", () => drag ? null : S.phase === "build" ? checkTree() : S.phase === "label" ? checkLabels() : null);
+$("#undo").addEventListener("click", undo);
+$("#tidy").addEventListener("click", () => { if (drag) return; pushUndo(); tidy(); save(); render(); });
+$("#restart").addEventListener("click", e => confirmBtn(e.currentTarget, "Click again to start over", () => { fresh(); save(); render(); }));
+$("#reveal").addEventListener("click", e => confirmBtn(e.currentTarget, "Click again to show it", () => {
+  if (S.phase === "build"){ S.log.revealed = true; S.pieces = [{x:0, y:0, t:cloneAnswer(SET.tree)}]; success(); }
+  else if (S.phase === "label"){
+    S.log.lrevealed = true; S.placed = {};
+    const keys = nodeKeys(); for (const id in keys){ const l = LABELS.find(x => x.key === keys[id]); if (l) S.placed[id] = l.name; }
+    finish();
+  }
+}));
+document.querySelectorAll("[data-sub]").forEach(b => b.addEventListener("click", () => { S.sub = b.dataset.sub; LAY = new Map(); resolve(null); save(); render(); }));
+noteEl.addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const a = b.dataset.act;
+  if (a === "mark") markForks();
+  else if (a === "lmark") markLabels();
+  else if (a === "copy") copyRecord(b);
+  else if (a === "again") confirmBtn(b, "Click again to clear this tree", () => { fresh(); save(); render(); });
+});
+document.addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !e.target.closest("textarea,input")){ e.preventDefault(); if (!drag) undo(); }
+  if (e.key === "Escape" && drag){ if (drag.label) endLabelDrag(null, true); else endDrag(null, true); }
+});
+const how = $("#how");
+try { if (localStorage.getItem(STORE + ".how") === "closed") how.open = false; } catch(e){}
+how.addEventListener("toggle", () => { try { localStorage.setItem(STORE + ".how", how.open ? "open" : "closed"); } catch(e){} });
+let rt; window.addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(() => { if (drag) return; LAY = new Map(); if (S.phase === "build") resolve(null); else if (S.pieces[0]) S.pieces[0].x = geo().X0; render(); }, 120); });
+
+/* ---------- boot ---------- */
+if (!load()){ fresh(); save(); }
+render();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { LAY = new Map(); if (S.phase === "build") resolve(null); render(); });
+})();
+</script>
+</body>
+</html>
