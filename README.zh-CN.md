@@ -2,7 +2,7 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-一个 [Claude Code](https://docs.claude.com/en/docs/claude-code) 技能，用来做教学和讲解类的 HTML 页面，带着作者自己的偏好：每个页面按自己的内容来设计；用标签页，不一滚到底；交互顺着想法本身的结构来；测验会记住你的答案；页面做完前，还要由一位局外人审查者在真实浏览器里检查一遍。
+一个 [Claude Code](https://docs.claude.com/en/docs/claude-code) 技能，用来做教学和讲解类的 HTML 页面，带着作者自己的偏好：每个页面按自己的内容来设计；用标签页，不一滚到底；交互顺着想法本身的结构来；测验会记住你的答案。
 
 ## 样例
 
