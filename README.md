@@ -2,7 +2,7 @@
 
 [English](README.md) | [中文](README.zh-CN.md)
 
-A [Claude Code](https://docs.claude.com/en/docs/claude-code) skill for educational and explainer HTML pages, with its author's preferences built in: each page designed from its own content, tabs instead of an endless scroll, interactions shaped like the idea, and quizzes that remember your answers.
+A Claude Code skill for educational and explainer HTML pages, with its author's preferences built in: each page designed from its own content, tabs instead of an endless scroll, interactions shaped like the idea, and quizzes that remember your answers.
 
 ## Samples
 
