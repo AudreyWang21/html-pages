@@ -1,5 +1,7 @@
 # html-pages
 
+[English](README.md) | [中文](README.zh-CN.md)
+
 A [Claude Code](https://docs.claude.com/en/docs/claude-code) skill with a point of view on making HTML pages with Claude: concept explainers, planning pages, quizzes, little tools.
 
 What it pushes Claude toward:
@@ -20,6 +22,8 @@ Copy the `html-pages/` folder into your Claude Code skills folder:
 (On Windows, `~` is your user folder.) To use it in one project only, put it in that project's `.claude/skills/` instead. Start a new Claude Code session and ask Claude which skills it has; `html-pages` should be listed. From then on it loads whenever Claude is about to write an HTML page, and you can also ask for it by name.
 
 It mentions a few other skills (`artifact-design`, `artifact-diagramming`, `dataviz`, `frontend-design`). They're optional: Claude loads whichever you have. The review step works best when Claude can run subagents and drive a headless Chrome (for example through Playwright).
+
+A Chinese translation of the skill, for reading, is in `html-pages/SKILL.zh-CN.md`. Claude loads the English `SKILL.md`; to have it use the Chinese one instead, rename it to `SKILL.md`.
 
 ## Make it yours
 

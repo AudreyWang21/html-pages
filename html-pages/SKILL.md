@@ -3,6 +3,8 @@ name: html-pages
 description: Standing preferences for HTML pages. Read whenever writing or planning any .html page — most often concept explainers for learning and project-planning pages, but equally reports, prototypes, dashboards, one-off editors and tools. Also read when a concept is proving hard to explain in prose (consider offering an interactive HTML explainer), or when several Markdown notes orbit one subject (consider offering to fold them into a single tabbed HTML page).
 ---
 
+中文版：[SKILL.zh-CN.md](SKILL.zh-CN.md)
+
 # HTML Pages
 
 Definition of done: an `.html` page that presents its specific content the best way that content can be presented — designed from the information outward. Each page stands alone, but a larger effort can be a web of linked pages rather than one file straining to hold everything.
