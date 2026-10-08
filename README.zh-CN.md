@@ -11,6 +11,14 @@
 - **交互式讲解。** 交互贴合想法本身的形状；测验带 "I don't know"（我不知道）选项，答案会保存，还能导出结果，直接粘贴回 Claude 会话。
 - **审查。** 每个页面都会在真实浏览器中接受检查，其中包括一位对页面一无所知的"局外人"审查者。
 
+## 在线试用样例
+
+直接在浏览器里打开，无需下载：
+
+- [模拟考试](https://audreywang21.github.io/html-pages/html-pages/references/Mock%20Exam%20Sample.html)：带题目导航栏、自动保存答案和重新打乱顺序的练习卷。
+- [搭建演化树](https://audreywang21.github.io/html-pages/html-pages/references/Tree%20Building%20Sample.html)：把动物类群拖到一起搭成一棵树，再为各演化支命名。
+- [拼写测试](https://audreywang21.github.io/html-pages/html-pages/references/Spelling%20Test%20Sample.html)：只重考你拼错的词的拼写练习。
+
 ## 安装
 
 把 `html-pages/` 文件夹复制到 Claude Code 的技能文件夹中：

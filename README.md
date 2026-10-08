@@ -11,6 +11,14 @@ What it pushes Claude toward:
 - **Interactive explainers.** Interactions shaped like the idea, quizzes with an "I don't know" option, answers that persist, and an export you can paste straight back into a Claude session.
 - **Reviewers.** Every page gets checked in a real browser, including by one "outsider" reviewer that knows nothing about it.
 
+## Try the samples
+
+Open them in your browser, no download needed:
+
+- [Mock exam](https://audreywang21.github.io/html-pages/html-pages/references/Mock%20Exam%20Sample.html): a practice exam with a question rail, saved answers and reshuffle.
+- [Tree building](https://audreywang21.github.io/html-pages/html-pages/references/Tree%20Building%20Sample.html): drag animal groups together into a tree, then name the clades.
+- [Spelling test](https://audreywang21.github.io/html-pages/html-pages/references/Spelling%20Test%20Sample.html): a spelling drill that re-asks only your misses.
+
 ## Install
 
 Copy the `html-pages/` folder into your Claude Code skills folder:
